@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}System Settings{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2><i class="fas fa-cogs me-2"></i>System Configuration</h2>
+        <p class="text-muted">Configure payroll calculations and system parameters</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Payroll & System Settings</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('settings.update_settings') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <!-- System Logo Upload -->
+                    <div class="mb-4">
+                        <label for="system_logo" class="form-label">
+                            <strong><i class="fas fa-image me-2"></i>System Logo</strong>
+                        </label>
+                        {% if current_logo %}
+                        <div class="mb-3">
+                            <p class="text-muted">Current Logo:</p>
+                            <div class="d-flex align-items-center">
+                                <img src="{{ url_for('static', filename='images/' + current_logo) }}" 
+                                     alt="Current Logo" 
+                                     class="rounded-circle me-3" 
+                                     style="width: 100px; height: 100px; object-fit: cover; border: 2px solid var(--gov-red);">
+                                <div>
+                                    <p class="mb-1">{{ current_logo }}</p>
+                                    <small class="text-muted">Upload a new file to replace</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <input type="file" class="form-control" id="system_logo" name="system_logo" accept="image/*">
+                        <div class="form-text">Upload a new logo for the system. Accepted formats: PNG, JPG, JPEG, GIF, SVG</div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- System Settings -->
+                    {% for setting in settings %}
+                    <div class="mb-3">
+                        <label for="setting_{{ setting.setting_name }}" class="form-label">
+                            <strong>{{ setting.setting_name.replace('_', ' ').title() }}</strong>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="setting_{{ setting.setting_name }}" 
+                               name="setting_{{ setting.setting_name }}" 
+                               value="{{ setting.setting_value }}" 
+                               required>
+                        <div class="form-text">{{ setting.description }}</div>
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-secondary me-md-2" onclick="history.back()">
+                            <i class="fas fa-arrow-left me-1"></i>Cancel
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-1"></i>Save Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

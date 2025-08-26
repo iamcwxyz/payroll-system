@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply for Position - Federal Agency</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/government-style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- Classification Banner -->
+    <div class="classification-banner">
+        <i class="fas fa-shield-alt me-2"></i>FEDERAL EMPLOYMENT APPLICATION SYSTEM
+    </div>
+    
+    <main class="container my-4 main-content-with-banner">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header government-header">
+                        <h3 class="mb-0">
+                            <i class="fas fa-file-alt me-2"></i>Federal Employment Application
+                        </h3>
+                        <p class="mb-0 mt-2 text-muted">Apply for positions within the Federal Agency</p>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('applications.submit_application') }}" enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="full_name" class="form-label">Full Legal Name *</label>
+                                    <input type="text" class="form-control" id="full_name" name="full_name" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">Email Address *</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="phone" class="form-label">Phone Number *</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="position" class="form-label">Position Applied For *</label>
+                                    <select class="form-select" id="position" name="position" required>
+                                        <option value="">Select Position</option>
+                                        <option value="Administrative Assistant">Administrative Assistant</option>
+                                        <option value="Data Analyst">Data Analyst</option>
+                                        <option value="Security Officer">Security Officer</option>
+                                        <option value="IT Specialist">IT Specialist</option>
+                                        <option value="Human Resources Coordinator">Human Resources Coordinator</option>
+                                        <option value="Financial Analyst">Financial Analyst</option>
+                                        <option value="Operations Manager">Operations Manager</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="address" class="form-label">Complete Address *</label>
+                                <textarea class="form-control" id="address" name="address" rows="3" required></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="resume" class="form-label">Resume/CV Upload *</label>
+                                <input type="file" class="form-control" id="resume" name="resume" accept=".pdf,.doc,.docx,.txt" required>
+                                <div class="form-text">Accepted formats: PDF, DOC, DOCX, TXT (Max: 16MB)</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="work_experience" class="form-label">Work Experience *</label>
+                                <textarea class="form-control" id="work_experience" name="work_experience" rows="4" 
+                                          placeholder="Please describe your relevant work experience, including job titles, companies, and duration of employment..." required></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="education" class="form-label">Educational Background *</label>
+                                <textarea class="form-control" id="education" name="education" rows="3" 
+                                          placeholder="Include degrees, certifications, institutions, and graduation dates..." required></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="skills" class="form-label">Skills & Qualifications *</label>
+                                <textarea class="form-control" id="skills" name="skills" rows="3" 
+                                          placeholder="List relevant technical skills, software proficiency, languages, etc..." required></textarea>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Important:</strong> By submitting this application, you acknowledge that all information provided is accurate and complete. False statements may result in disqualification.
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                                <a href="{{ url_for('auth.login') }}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>Back to Login
+                                </a>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-paper-plane me-1"></i>Submit Application
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('applications.check_status') }}" class="btn btn-outline-light">
+                        <i class="fas fa-search me-1"></i>Check Application Status
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

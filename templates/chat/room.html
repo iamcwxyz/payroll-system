@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}{{ room.room_name }} - Chat{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h3><i class="fas fa-comments me-2"></i>{{ room.room_name }}</h3>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-{{ 'globe' if room.room_type == 'general' else 'users' }} me-1"></i>
+                    {{ room.room_type.title() }} Chat | Join Code: <code>{{ room.join_code }}</code>
+                </p>
+            </div>
+            <a href="{{ url_for('chat.chat_dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Chat
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-9">
+        <div class="card chat-container" style="height: 70vh;">
+            <div class="card-body d-flex flex-column p-0">
+                <!-- Messages Area -->
+                <div id="messagesArea" class="flex-grow-1 p-3" style="overflow-y: auto; max-height: calc(70vh - 120px);">
+                    {% for message in messages %}
+                    <div class="message-item mb-3 {{ 'own-message' if message.sender_id == session.user_id else '' }}">
+                        <div class="d-flex {{ 'justify-content-end' if message.sender_id == session.user_id else '' }}">
+                            {% if message.sender_id != session.user_id %}
+                            <div class="me-2">
+                                {% if message.profile_picture %}
+                                    <img src="{{ url_for('static', filename='uploads/' + message.profile_picture) }}" 
+                                         alt="{{ message.sender_name }}" 
+                                         class="rounded-circle" 
+                                         style="width: 35px; height: 35px; object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" 
+                                         style="width: 35px; height: 35px;">
+                                        <i class="fas fa-user text-white" style="font-size: 0.8rem;"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            <div class="message-bubble {{ 'bg-primary text-white' if message.sender_id == session.user_id else 'bg-dark border' }}" 
+                                 style="max-width: 70%; padding: 10px 15px; border-radius: 15px;">
+                                {% if message.sender_id != session.user_id %}
+                                <div class="message-header mb-1">
+                                    <strong style="color: var(--gov-red);">{{ message.sender_name }}</strong>
+                                    <small class="text-muted">({{ message.employee_id }})</small>
+                                </div>
+                                {% endif %}
+                                <div class="message-content">{{ message.message }}</div>
+                                <div class="message-time text-end">
+                                    <small class="text-muted">{{ message.sent_at }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Message Input -->
+                <div class="border-top p-3">
+                    <form method="POST" action="{{ url_for('chat.send_message', room_id=room.id) }}" id="messageForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="message" id="messageInput" 
+                                   placeholder="Type your message..." required autocomplete="off">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-users me-2"></i>Room Members ({{ members|length }})</h6>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                {% for member in members %}
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-2">
+                        {% if member.profile_picture %}
+                            <img src="{{ url_for('static', filename='uploads/' + member.profile_picture) }}" 
+                                 alt="{{ member.name }}" 
+                                 class="rounded-circle" 
+                                 style="width: 40px; height: 40px; object-fit: cover;">
+                        {% else %}
+                            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px;">
+                                <i class="fas fa-user text-white" style="font-size: 0.8rem;"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold">{{ member.name }}</div>
+                        <small class="text-muted">{{ member.employee_id }} - {{ member.role }}</small>
+                    </div>
+                    <div class="online-indicator bg-success rounded-circle" style="width: 10px; height: 10px;"></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-share me-2"></i>Share Room</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <label class="form-label">Join Code:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" value="{{ room.join_code }}" id="joinCodeInput" readonly>
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyJoinCode()">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                <small class="text-muted">Share this code with colleagues to invite them to the room</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyJoinCode() {
+    const input = document.getElementById('joinCodeInput');
+    input.select();
+    document.execCommand('copy');
+    alert('Join code copied to clipboard!');
+}
+
+// Auto-scroll to bottom of messages
+function scrollToBottom() {
+    const messagesArea = document.getElementById('messagesArea');
+    messagesArea.scrollTop = messagesArea.scrollHeight;
+}
+
+// Auto-refresh messages every 3 seconds
+function refreshMessages() {
+    fetch(`{{ url_for('chat.get_messages', room_id=room.id) }}?since={{ messages[-1].sent_at if messages else '1970-01-01 00:00:00' }}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length > 0) {
+                const messagesArea = document.getElementById('messagesArea');
+                data.forEach(msg => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `message-item mb-3 ${msg.is_own ? 'own-message' : ''}`;
+                    messageDiv.innerHTML = `
+                        <div class="d-flex ${msg.is_own ? 'justify-content-end' : ''}">
+                            <div class="message-bubble ${msg.is_own ? 'bg-primary text-white' : 'bg-dark border'}" 
+                                 style="max-width: 70%; padding: 10px 15px; border-radius: 15px;">
+                                ${!msg.is_own ? `
+                                <div class="message-header mb-1">
+                                    <strong style="color: var(--gov-red);">${msg.sender_name}</strong>
+                                    <small class="text-muted">(${msg.employee_id})</small>
+                                </div>` : ''}
+                                <div class="message-content">${msg.message}</div>
+                                <div class="message-time text-end">
+                                    <small class="text-muted">${msg.sent_at}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    messagesArea.appendChild(messageDiv);
+                });
+                scrollToBottom();
+            }
+        });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    scrollToBottom();
+    setInterval(refreshMessages, 3000);
+    
+    // Focus on message input
+    document.getElementById('messageInput').focus();
+    
+    // Handle form submission
+    document.getElementById('messageForm').addEventListener('submit', function() {
+        setTimeout(() => {
+            document.getElementById('messageInput').value = '';
+            document.getElementById('messageInput').focus();
+        }, 100);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Payroll System{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="row justify-content-center w-100">
+        <div class="col-md-6 col-lg-4">
+            <div class="card login-card">
+                <div class="card-body p-5">
+                    <div class="government-brand">
+                        <div class="government-seal mx-auto mb-3">
+                            <img src="{{ url_for('static', filename='images/federal_emblem.png') }}" 
+                                 alt="Federal Emblem" style="width: 80px; height: 80px; object-fit: contain;">
+                        </div>
+                        <h1>Federal Payroll</h1>
+                        <div class="subtitle">Secure Access Portal</div>
+                        <p class="text-muted mt-3">Authorized Personnel Only</p>
+                    </div>
+                
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-sign-in-alt me-1"></i>Sign In
+                    </button>
+                </form>
+                
+                    <div class="text-center mt-4">
+                        <hr style="border-color: var(--gov-red);">
+                        <div class="row">
+                            <div class="col-6">
+                                <a href="{{ url_for('kiosk.punch') }}" class="text-decoration-none" style="color: var(--gov-red);">
+                                    <i class="fas fa-clock me-1"></i>Time Clock
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="{{ url_for('applications.apply_form') }}" class="text-decoration-none" style="color: var(--gov-red);">
+                                    <i class="fas fa-file-alt me-1"></i>Apply for Position
+                                </a>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <a href="{{ url_for('applications.check_status') }}" class="text-decoration-none text-muted" style="font-size: 0.85rem;">
+                                    <i class="fas fa-search me-1"></i>Check Application Status
+                                </a>
+                            </div>
+                        </div>
+                        <p class="text-muted" style="font-size: 0.75rem; margin-top: 1rem;">
+                            <i class="fas fa-lock me-1"></i>Secured by Federal Standards
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

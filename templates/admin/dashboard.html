@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex align-items-center mb-4">
+            <img src="{{ url_for('static', filename='images/federal_emblem.png') }}" 
+                 alt="Federal Emblem" style="width: 60px; height: 60px; margin-right: 15px;">
+            <div>
+                <h2><i class="fas fa-tachometer-alt me-2"></i>Administrator Dashboard</h2>
+                <p class="text-muted">Federal Payroll & Employee Management System</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-users fa-2x text-primary"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5 class="card-title mb-1">{{ total_employees }}</h5>
+                        <p class="card-text text-muted">Active Employees</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-clock fa-2x text-success"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5 class="card-title mb-1">{{ total_attendance_today }}</h5>
+                        <p class="card-text text-muted">Today's Attendance</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-calendar-alt fa-2x text-warning"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5 class="card-title mb-1">{{ pending_leaves }}</h5>
+                        <p class="card-text text-muted">Pending Leaves</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user-plus me-2"></i>Employee Management
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Add new employees and manage existing ones.</p>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('admin.add_employee') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Add New Employee
+                    </a>
+                    <a href="{{ url_for('admin.list_employees') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-1"></i>View All Employees
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-money-bill me-2"></i>Payroll Management
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Generate and manage employee payroll.</p>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('admin.payroll', generate=1) }}" class="btn btn-success">
+                        <i class="fas fa-calculator me-1"></i>Generate Payroll
+                    </a>
+                    <a href="{{ url_for('admin.payroll') }}" class="btn btn-outline-success">
+                        <i class="fas fa-eye me-1"></i>View Payroll Records
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Interactive Analytics Dashboard -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Employee Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="employeeChart" style="height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Department Overview</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="departmentChart" style="height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Employee Status Chart
+const empCtx = document.getElementById('employeeChart').getContext('2d');
+const employeeChart = new Chart(empCtx, {
+    type: 'bar',
+    data: {
+        labels: ['Active', 'On Leave', 'Attendance Today'],
+        datasets: [{
+            label: 'Employees',
+            data: [{{ total_employees }}, {{ pending_leaves }}, {{ total_attendance_today }}],
+            backgroundColor: ['#198754', '#ffc107', '#0d6efd'],
+            borderColor: ['#157347', '#ffca2c', '#0b5ed7'],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+
+// Department Chart (placeholder data - could be enhanced with real data)
+const deptCtx = document.getElementById('departmentChart').getContext('2d');
+const departmentChart = new Chart(deptCtx, {
+    type: 'pie',
+    data: {
+        labels: ['IT', 'HR', 'Finance', 'Operations', 'Security'],
+        datasets: [{
+            data: [25, 15, 20, 30, 10],
+            backgroundColor: ['#dc3545', '#198754', '#0d6efd', '#ffc107', '#6c757d'],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Federal Time Clock - Secure Access</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/government-style.css') }}" rel="stylesheet">
+</head>
+<body class="kiosk-container">
+    <!-- Classification Banner -->
+    <div class="classification-banner">
+        <i class="fas fa-shield-alt me-2"></i>OFFICIAL USE ONLY - FEDERAL TIME CLOCK SYSTEM
+    </div>
+    
+    <div class="container-fluid h-100 main-content-with-banner">
+        <div class="row h-100 align-items-center">
+            <div class="col-12">
+                <div class="government-brand mb-5">
+                    <div class="government-seal mx-auto mb-4" style="width: 100px; height: 100px;">
+                        <i class="fas fa-clock" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h1 class="display-4">Federal Time Clock</h1>
+                    <div class="subtitle">Department of Human Resources</div>
+                    <p class="lead text-muted mt-3">Authorized Personnel - Enter Employee ID</p>
+                </div>
+                
+                <div class="row justify-content-center">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card kiosk-card">
+                            <div class="card-body p-4">
+                                {% if employee %}
+                                    <!-- Employee Profile Display -->
+                                    <div class="employee-profile text-center mb-4">
+                                        {% if employee.profile_picture %}
+                                            <img src="{{ url_for('static', filename='uploads/' + employee.profile_picture) }}" 
+                                                 alt="{{ employee.name }}" 
+                                                 class="rounded-circle mb-3" 
+                                                 style="width: 100px; height: 100px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-3" 
+                                                 style="width: 100px; height: 100px;">
+                                                <i class="fas fa-user fa-2x text-white"></i>
+                                            </div>
+                                        {% endif %}
+                                        <h4>{{ employee.name }}</h4>
+                                        <p class="text-muted mb-1">{{ employee.employee_id }}</p>
+                                        <p class="text-muted">{{ employee.department }} - {{ employee.position }}</p>
+                                    </div>
+                                    
+                                    {% if message %}
+                                    <div class="alert alert-{{ message_type }} text-center">
+                                        {{ message }}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if time_in %}
+                                    <div class="text-center">
+                                        <p><strong>Time In:</strong> {{ time_in }}</p>
+                                        {% if time_out %}
+                                        <p><strong>Time Out:</strong> {{ time_out }}</p>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('kiosk.punch') }}" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-redo me-1"></i>New Entry
+                                        </a>
+                                    </div>
+                                {% else %}
+                                    <!-- NFC/QR Scanner Section -->
+                                    <div class="text-center mb-4" id="scanner-section">
+                                        <div class="scanner-status-indicator mb-3" id="scanner-indicator">
+                                            <div class="scanner-light" id="scanner-light"></div>
+                                            <small class="text-muted d-block">Scanner Ready - Tap/Scan ID</small>
+                                        </div>
+                                        
+                                        <div class="alert alert-info d-none" id="scan-feedback">
+                                            <i class="fas fa-qrcode me-2"></i>
+                                            <span id="scan-message">Scanning...</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Manual Employee ID Input (Fallback) -->
+                                    <div class="text-center mb-3">
+                                        <button class="btn btn-outline-secondary btn-sm" type="button" id="toggle-manual">
+                                            <i class="fas fa-keyboard me-1"></i>Manual Entry
+                                        </button>
+                                    </div>
+                                    
+                                    <form method="POST" id="manual-form" style="display: none;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <div class="mb-4">
+                                            <label for="employee_id" class="form-label">Employee ID</label>
+                                            <input type="text" 
+                                                   class="form-control form-control-lg text-center" 
+                                                   id="employee_id" 
+                                                   name="employee_id" 
+                                                   placeholder="EMP001 or tap scanner" 
+                                                   style="font-size: 1.5rem;"
+                                                   required>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                                            <i class="fas fa-fingerprint me-2"></i>Punch In/Out
+                                        </button>
+                                    </form>
+                                    
+                                    <!-- Hidden form for scan data -->
+                                    <form method="POST" id="scan-form" style="display: none;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <input type="hidden" name="scanned_data" id="scanned_data" value="">
+                                    </form>
+                                    
+                                    {% with messages = get_flashed_messages(with_categories=true) %}
+                                        {% if messages %}
+                                            {% for category, message in messages %}
+                                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} mt-3" role="alert">
+                                                    {{ message }}
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <a href="{{ url_for('auth.login') }}" class="text-muted text-decoration-none">
+                                <i class="fas fa-sign-in-alt me-1"></i>Employee Login
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let scannerActive = true;
+        let scanBuffer = '';
+        let scanTimeout = null;
+        let isProcessingScan = false;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeScanner();
+            setupManualToggle();
+            setupKeyboardListener();
+        });
+        
+        function initializeScanner() {
+            updateScannerStatus('ready');
+            // Focus on invisible element to capture keystrokes
+            document.body.tabIndex = 0;
+            document.body.focus();
+        }
+        
+        function setupManualToggle() {
+            const toggleBtn = document.getElementById('toggle-manual');
+            const manualForm = document.getElementById('manual-form');
+            const scannerSection = document.getElementById('scanner-section');
+            
+            toggleBtn.addEventListener('click', function() {
+                if (manualForm.style.display === 'none') {
+                    // Show manual form
+                    manualForm.style.display = 'block';
+                    scannerSection.style.display = 'none';
+                    toggleBtn.innerHTML = '<i class="fas fa-qrcode me-1"></i>Back to Scanner';
+                    scannerActive = false;
+                    
+                    const empInput = document.getElementById('employee_id');
+                    if (empInput) {
+                        empInput.focus();
+                        empInput.addEventListener('input', function() {
+                            this.value = this.value.toUpperCase();
+                        });
+                    }
+                } else {
+                    // Show scanner
+                    manualForm.style.display = 'none';
+                    scannerSection.style.display = 'block';
+                    toggleBtn.innerHTML = '<i class="fas fa-keyboard me-1"></i>Manual Entry';
+                    scannerActive = true;
+                    document.body.focus();
+                    updateScannerStatus('ready');
+                }
+            });
+        }
+        
+        function setupKeyboardListener() {
+            // Listen for barcode/QR scanner keyboard input
+            document.addEventListener('keypress', function(e) {
+                if (!scannerActive || isProcessingScan) return;
+                
+                // Prevent default if it's a special character that might interfere
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    processScanBuffer();
+                    return;
+                }
+                
+                // Add character to buffer
+                scanBuffer += e.key;
+                
+                // Clear timeout if exists
+                clearTimeout(scanTimeout);
+                
+                // Set timeout to process buffer (scanners typically send data quickly)
+                scanTimeout = setTimeout(() => {
+                    if (scanBuffer.length > 2) { // Minimum length check
+                        processScanBuffer();
+                    } else {
+                        scanBuffer = '';
+                    }
+                }, 100); // 100ms timeout for scan completion
+            });
+            
+            // Also listen for keydown for special keys
+            document.addEventListener('keydown', function(e) {
+                if (!scannerActive || isProcessingScan) return;
+                
+                // Some scanners send Enter key
+                if (e.key === 'Enter' && scanBuffer.length > 0) {
+                    e.preventDefault();
+                    processScanBuffer();
+                }
+            });
+        }
+        
+        function processScanBuffer() {
+            if (isProcessingScan || scanBuffer.length === 0) return;
+            
+            isProcessingScan = true;
+            const scannedData = scanBuffer.trim();
+            scanBuffer = '';
+            
+            updateScannerStatus('processing');
+            
+            // Process the scan automatically
+            processAutomaticScan(scannedData);
+        }
+        
+        function processAutomaticScan(scannedData) {
+            // Send AJAX request to process scan
+            fetch('{{ url_for("kiosk.scan_process") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    scanData: scannedData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayScanResult(data);
+                } else {
+                    showScanError(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Scan processing error:', error);
+                showScanError('Network error occurred');
+            });
+        }
+        
+        function displayScanResult(data) {
+            // Create success display
+            const scannerSection = document.getElementById('scanner-section');
+            
+            scannerSection.innerHTML = `
+                <div class="employee-profile text-center mb-4">
+                    ${data.employee.profile_picture ? 
+                        `<img src="/static/uploads/${data.employee.profile_picture}" 
+                             alt="${data.employee.name}" 
+                             class="rounded-circle mb-3" 
+                             style="width: 100px; height: 100px; object-fit: cover;">` :
+                        `<div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-3" 
+                             style="width: 100px; height: 100px;">
+                            <i class="fas fa-user fa-2x text-white"></i>
+                        </div>`
+                    }
+                    <h4>${data.employee.name}</h4>
+                    <p class="text-muted mb-1">${data.employee.employee_id}</p>
+                    <p class="text-muted">${data.employee.department} - ${data.employee.position}</p>
+                </div>
+                
+                <div class="alert alert-success text-center">
+                    <i class="fas fa-check-circle me-2"></i>
+                    ${data.message}
+                </div>
+                
+                <div class="text-center">
+                    <p><strong>${data.action}:</strong> ${data.time}</p>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary btn-lg" onclick="resetScanner()">
+                        <i class="fas fa-redo me-1"></i>New Entry
+                    </button>
+                </div>
+            `;
+            
+            // Auto-reset after 5 seconds
+            setTimeout(resetScanner, 5000);
+        }
+        
+        function showScanError(message) {
+            updateScannerStatus('error', message);
+            setTimeout(() => {
+                updateScannerStatus('ready');
+                isProcessingScan = false;
+            }, 3000);
+        }
+        
+        function updateScannerStatus(status, message = '') {
+            const indicator = document.getElementById('scanner-indicator');
+            const light = document.getElementById('scanner-light');
+            const feedback = document.getElementById('scan-feedback');
+            const scanMessage = document.getElementById('scan-message');
+            
+            // Reset classes
+            light.className = 'scanner-light';
+            feedback.className = 'alert d-none';
+            
+            switch(status) {
+                case 'ready':
+                    light.classList.add('scanner-ready');
+                    indicator.querySelector('small').textContent = 'Scanner Ready - Tap/Scan ID';
+                    break;
+                case 'processing':
+                    light.classList.add('scanner-processing');
+                    feedback.className = 'alert alert-info';
+                    scanMessage.textContent = 'Processing scan...';
+                    indicator.querySelector('small').textContent = 'Processing...';
+                    break;
+                case 'success':
+                    light.classList.add('scanner-success');
+                    feedback.className = 'alert alert-success';
+                    scanMessage.textContent = message || 'Scan successful!';
+                    break;
+                case 'error':
+                    light.classList.add('scanner-error');
+                    feedback.className = 'alert alert-danger';
+                    scanMessage.textContent = message || 'Scan failed';
+                    indicator.querySelector('small').textContent = 'Scan failed - Try again';
+                    break;
+            }
+        }
+        
+        function resetScanner() {
+            location.reload();
+        }
+        
+        // Auto-redirect after successful punch (for manual form)
+        {% if employee and message %}
+        setTimeout(function() {
+            window.location.href = "{{ url_for('kiosk.punch') }}";
+        }, 5000);
+        {% endif %}
+    </script>
+    
+    <style>
+        .scanner-light {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .scanner-ready {
+            background-color: #28a745;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+        }
+        
+        .scanner-processing {
+            background-color: #ffc107;
+            box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+            animation: pulse 1s infinite;
+        }
+        
+        .scanner-success {
+            background-color: #28a745;
+            box-shadow: 0 0 15px rgba(40, 167, 69, 0.8);
+        }
+        
+        .scanner-error {
+            background-color: #dc3545;
+            box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .scanner-status-indicator {
+            padding: 15px;
+            border: 2px dashed #6c757d;
+            border-radius: 8px;
+            background-color: rgba(108, 117, 125, 0.1);
+        }
+    </style>
+</body>
+</html>

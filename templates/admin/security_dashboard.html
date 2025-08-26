@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+
+{% block title %}Security Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Classification Banner -->
+    <div class="alert alert-danger border-0 mb-4" style="background: linear-gradient(45deg, var(--gov-red), #dc1f2e);">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-shield-alt fa-2x me-3"></i>
+            <div>
+                <h4 class="mb-0 text-white">CLASSIFIED - SECURITY OPERATIONS CENTER</h4>
+                <small class="text-white opacity-75">Federal Payroll System Security Dashboard</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Statistics Row -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success border-0">
+                <div class="card-body text-center">
+                    <i class="fas fa-sign-in-alt fa-2x mb-2"></i>
+                    <h3 class="mb-0">{{ stats.logins_24h or 0 }}</h3>
+                    <small class="text-uppercase">Successful Logins (24h)</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning border-0">
+                <div class="card-body text-center">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                    <h3 class="mb-0">{{ stats.failed_logins_24h or 0 }}</h3>
+                    <small class="text-uppercase">Failed Attempts (24h)</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info border-0">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <h3 class="mb-0">{{ stats.timeouts_24h or 0 }}</h3>
+                    <small class="text-uppercase">Session Timeouts (24h)</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary border-0">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-2x mb-2"></i>
+                    <h3 class="mb-0">{{ total_users or 0 }}</h3>
+                    <small class="text-uppercase">Total Active Users</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons Row -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>Security Operations
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <form method="POST" action="{{ url_for('security.create_backup') }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="btn btn-success btn-lg w-100">
+                                    <i class="fas fa-save me-2"></i>Create Manual Backup
+                                </button>
+                            </form>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="{{ url_for('security.system_status') }}" class="btn btn-info btn-lg w-100">
+                                <i class="fas fa-heartbeat me-2"></i>System Health Check
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <form method="POST" action="{{ url_for('security.clear_security_logs') }}" 
+                                  onsubmit="return confirm('Are you sure you want to clear old security logs?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="btn btn-warning btn-lg w-100">
+                                    <i class="fas fa-broom me-2"></i>Clear Old Logs
+                                </button>
+                            </form>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <button class="btn btn-secondary btn-lg w-100" onclick="loadSecurityCharts()">
+                                <i class="fas fa-chart-bar me-2"></i>Load Analytics
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Login Activity (24 Hours)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="loginChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Security Events Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="eventsChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup Management -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-database me-2"></i>Backup Management
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if backups %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Backup Date</th>
+                                    <th>Size</th>
+                                    <th>Type</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for backup in backups %}
+                                <tr>
+                                    <td>{{ backup.backup_time[:19] }}</td>
+                                    <td>{{ "%.2f"|format(backup.file_size / 1024 / 1024) }} MB</td>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            {{ 'Compressed' if backup.compressed else 'Uncompressed' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('security.restore_backup') }}" 
+                                              class="d-inline" 
+                                              onsubmit="return confirm('⚠️ WARNING: This will restore the database to {{ backup.backup_time[:19] }}. All current data will be replaced. Are you absolutely sure?')">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <input type="hidden" name="backup_name" value="{{ backup.backup_name }}">
+                                            <button type="submit" class="btn btn-warning btn-sm">
+                                                <i class="fas fa-undo"></i> Restore
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-database fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No backups available</h5>
+                        <p class="text-muted">Create your first backup using the button above</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Logs -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>Recent Security Events
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if security_logs %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Event</th>
+                                    <th>User</th>
+                                    <th>IP Address</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in security_logs %}
+                                <tr>
+                                    <td>{{ log.timestamp[:19] }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if log.event_type == 'LOGIN_SUCCESS' %}bg-success
+                                            {% elif log.event_type == 'LOGIN_FAILED' %}bg-danger
+                                            {% elif log.event_type == 'SESSION_TIMEOUT' %}bg-warning
+                                            {% elif 'BACKUP' in log.event_type %}bg-info
+                                            {% else %}bg-secondary
+                                            {% endif %}">
+                                            {{ log.event_type }}
+                                        </span>
+                                    </td>
+                                    <td>{{ log.user_name or 'System' }}</td>
+                                    <td>
+                                        <code>{{ log.ip_address or 'N/A' }}</code>
+                                    </td>
+                                    <td>{{ log.event_description }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-list fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No security events recorded</h5>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+let loginChart = null;
+let eventsChart = null;
+
+function loadSecurityCharts() {
+    fetch('/security/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            createLoginChart(data.hourly_stats);
+            createEventsChart(data.event_types);
+        })
+        .catch(error => {
+            console.error('Error loading security data:', error);
+            showAlert('Failed to load security analytics', 'danger');
+        });
+}
+
+function createLoginChart(hourlyStats) {
+    const ctx = document.getElementById('loginChart').getContext('2d');
+    
+    if (loginChart) {
+        loginChart.destroy();
+    }
+    
+    const hours = Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0'));
+    const successData = hours.map(hour => {
+        const stat = hourlyStats.find(s => s.hour === hour);
+        return stat ? stat.successful_logins : 0;
+    });
+    const failedData = hours.map(hour => {
+        const stat = hourlyStats.find(s => s.hour === hour);
+        return stat ? stat.failed_logins : 0;
+    });
+    
+    loginChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: hours.map(h => h + ':00'),
+            datasets: [{
+                label: 'Successful Logins',
+                data: successData,
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                tension: 0.1
+            }, {
+                label: 'Failed Logins',
+                data: failedData,
+                borderColor: '#dc3545',
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#ffffff'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#ffffff'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: '#ffffff'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createEventsChart(eventTypes) {
+    const ctx = document.getElementById('eventsChart').getContext('2d');
+    
+    if (eventsChart) {
+        eventsChart.destroy();
+    }
+    
+    const colors = [
+        '#28a745', '#dc3545', '#ffc107', '#17a2b8', 
+        '#6f42c1', '#e83e8c', '#fd7e14', '#20c997'
+    ];
+    
+    eventsChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: eventTypes.map(e => e.event_type),
+            datasets: [{
+                data: eventTypes.map(e => e.count),
+                backgroundColor: colors.slice(0, eventTypes.length),
+                borderWidth: 2,
+                borderColor: '#1a1a1a'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#ffffff'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
+}
+
+// Load charts on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadSecurityCharts();
+});
+</script>
+{% endblock %}

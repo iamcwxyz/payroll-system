@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Federal Payroll & Attendance System - Department of Human Resources</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/government-style.css') }}" rel="stylesheet">
+    
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, var(--gov-black) 0%, var(--gov-gray-dark) 50%, var(--gov-black) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(220,53,69,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .federal-seal {
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, var(--gov-red) 0%, var(--gov-gray-dark) 70%);
+            border: 4px solid var(--gov-white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            box-shadow: 0 0 30px rgba(220, 53, 69, 0.5);
+        }
+        
+        .federal-seal i {
+            font-size: 4rem;
+            color: var(--gov-white);
+        }
+        
+        .department-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--gov-white);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            margin-bottom: 1rem;
+        }
+        
+        .department-subtitle {
+            font-size: 1.8rem;
+            color: var(--gov-red);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 2rem;
+        }
+        
+        .mission-statement {
+            font-size: 1.2rem;
+            color: var(--gov-white);
+            font-weight: 300;
+            line-height: 1.8;
+            max-width: 800px;
+            margin: 0 auto 3rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .stat-card {
+            background: rgba(26, 26, 26, 0.8);
+            border: 1px solid var(--gov-red);
+            border-radius: 0;
+            padding: 2rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--gov-red);
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            color: var(--gov-white);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0.5rem;
+        }
+        
+        .access-button {
+            background: linear-gradient(135deg, var(--gov-red) 0%, #dc1f2e 100%);
+            border: none;
+            color: var(--gov-white);
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 0;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .access-button:hover {
+            background: linear-gradient(135deg, #dc1f2e 0%, var(--gov-red) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
+            color: var(--gov-white);
+        }
+        
+        .security-notice {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid var(--gov-red);
+            border-radius: 0;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .footer-section {
+            background: var(--gov-black);
+            border-top: 3px solid var(--gov-red);
+            padding: 3rem 0;
+            margin-top: 4rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Classification Banner -->
+    <div class="classification-banner">
+        <i class="fas fa-shield-alt me-2"></i>OFFICIAL USE ONLY - FEDERAL PAYROLL SYSTEM
+    </div>
+    
+    <!-- Hero Section -->
+    <section class="hero-section main-content-with-banner">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10 text-center hero-content">
+                    <!-- Federal Seal -->
+                    <div class="federal-seal">
+                        {% if current_logo %}
+                            <img src="{{ url_for('static', filename='images/' + current_logo) }}" 
+                                 alt="Federal Seal" 
+                                 class="rounded-circle" 
+                                 style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                            <i class="fas fa-shield-alt"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Department Title -->
+                    <h1 class="department-title">Federal Payroll System</h1>
+                    <h2 class="department-subtitle">Department of Human Resources</h2>
+                    
+                    <!-- Mission Statement -->
+                    <p class="mission-statement">
+                        Providing secure, efficient, and reliable payroll and attendance management services 
+                        for federal employees nationwide. Our integrated system ensures accurate compensation, 
+                        comprehensive benefits administration, and streamlined workforce management.
+                    </p>
+                    
+                    <!-- Access Button -->
+                    <div class="mb-4">
+                        <a href="{{ url_for('auth.login') }}" class="access-button btn">
+                            <i class="fas fa-sign-in-alt me-2"></i>Access System
+                        </a>
+                    </div>
+                    
+                    <!-- Security Notice -->
+                    <div class="security-notice">
+                        <h5 class="text-warning mb-2">
+                            <i class="fas fa-exclamation-triangle me-2"></i>SECURITY NOTICE
+                        </h5>
+                        <p class="mb-0 text-white">
+                            This is a U.S. Government computer system. Unauthorized access is prohibited and may result in criminal prosecution. 
+                            All activities are monitored and recorded for security purposes.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Services Section -->
+    <section class="py-5" style="background: var(--gov-gray-dark);">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center mb-5">
+                    <h2 class="text-white mb-3">
+                        <i class="fas fa-cogs me-3"></i>System Capabilities
+                    </h2>
+                    <p class="text-muted">Comprehensive workforce management solutions</p>
+                </div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-users fa-2x text-danger mb-3"></i>
+                    <span class="stat-number">∞</span>
+                    <div class="stat-label">Employee Records</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-clock fa-2x text-danger mb-3"></i>
+                    <span class="stat-number">24/7</span>
+                    <div class="stat-label">System Availability</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-calculator fa-2x text-danger mb-3"></i>
+                    <span class="stat-number">AUTO</span>
+                    <div class="stat-label">Payroll Processing</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-shield-alt fa-2x text-danger mb-3"></i>
+                    <span class="stat-number">256</span>
+                    <div class="stat-label">Bit Encryption</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section class="py-5" style="background: var(--gov-black);">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card bg-dark border-danger h-100">
+                        <div class="card-body">
+                            <h5 class="card-title text-danger">
+                                <i class="fas fa-user-tie me-2"></i>Employee Management
+                            </h5>
+                            <p class="card-text text-white">
+                                Comprehensive employee records, profile management, and organizational structure tracking 
+                                with role-based access control and security protocols.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card bg-dark border-danger h-100">
+                        <div class="card-body">
+                            <h5 class="card-title text-danger">
+                                <i class="fas fa-clock me-2"></i>Time & Attendance
+                            </h5>
+                            <p class="card-text text-white">
+                                Real-time attendance tracking, kiosk-based clock-in/out system, and automated 
+                                overtime calculation with detailed reporting capabilities.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card bg-dark border-danger h-100">
+                        <div class="card-body">
+                            <h5 class="card-title text-danger">
+                                <i class="fas fa-money-check-alt me-2"></i>Payroll Processing
+                            </h5>
+                            <p class="card-text text-white">
+                                Automated payroll calculation with tax deductions, benefits processing, 
+                                and government compliance reporting in Philippine Peso (₱) currency.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card bg-dark border-danger h-100">
+                        <div class="card-body">
+                            <h5 class="card-title text-danger">
+                                <i class="fas fa-comments me-2"></i>Internal Communications
+                            </h5>
+                            <p class="card-text text-white">
+                                Secure internal messaging system with group chats, direct messaging, 
+                                and real-time notifications for enhanced team collaboration.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Application Section -->
+    <section class="py-5" style="background: var(--gov-gray-dark);">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <h2 class="text-white mb-4">
+                        <i class="fas fa-briefcase me-3"></i>Join Our Team
+                    </h2>
+                    <p class="text-muted mb-4">
+                        The Federal Payroll System is accepting applications for qualified personnel. 
+                        We seek dedicated professionals committed to public service excellence.
+                    </p>
+                    <div class="d-flex gap-3 justify-content-center">
+                        <a href="/applications/apply" class="btn btn-outline-danger btn-lg">
+                            <i class="fas fa-file-alt me-2"></i>Submit Application
+                        </a>
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-danger btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Employee Login
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="footer-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <h5 class="text-danger mb-3">
+                        <i class="fas fa-building me-2"></i>Contact Information
+                    </h5>
+                    <div class="text-white">
+                        <p><i class="fas fa-map-marker-alt me-2"></i>Federal Building<br>Department of Human Resources</p>
+                        <p><i class="fas fa-phone me-2"></i>+63 (02) 8888-GOVT</p>
+                        <p><i class="fas fa-envelope me-2"></i>hr@federal.gov.ph</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h5 class="text-danger mb-3">
+                        <i class="fas fa-clock me-2"></i>Office Hours
+                    </h5>
+                    <div class="text-white">
+                        <p>Monday - Friday: 8:00 AM - 5:00 PM</p>
+                        <p>Saturday: 8:00 AM - 12:00 PM</p>
+                        <p>Sunday: Closed</p>
+                        <p class="text-danger mt-2">
+                            <i class="fas fa-exclamation-circle me-1"></i>Emergency Support: 24/7
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h5 class="text-danger mb-3">
+                        <i class="fas fa-info-circle me-2"></i>System Information
+                    </h5>
+                    <div class="text-white">
+                        <p>Version: 2.0.1 Federal</p>
+                        <p>Last Updated: August 2025</p>
+                        <p>Security Level: Restricted</p>
+                        <p class="text-warning mt-2">
+                            <i class="fas fa-lock me-1"></i>Encrypted Connection Required
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="border-danger my-4">
+            
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-flag me-2"></i>GOVERNMENT OF THE PHILIPPINES
+                    </p>
+                    <p class="text-white mb-0">
+                        © 2025 Federal Payroll & Attendance System. All rights reserved. 
+                        <br><small class="text-muted">
+                            This system is operated by the Department of Human Resources in compliance with federal regulations.
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h5>Accessing Federal System...</h5>
+            <p>Please wait while we verify your security clearance</p>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Show loading animation when accessing system
+        document.addEventListener('DOMContentLoaded', function() {
+            const accessButtons = document.querySelectorAll('a[href*="login"], a[href*="apply"]');
+            accessButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    document.getElementById('loadingOverlay').style.display = 'flex';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

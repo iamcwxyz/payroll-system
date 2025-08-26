@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Review Application{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2><i class="fas fa-file-alt me-2"></i>Application Review: {{ application.application_id }}</h2>
+        <p class="text-muted">Review and process job application</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Applicant Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Full Name:</strong></td>
+                                <td>{{ application.full_name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Email:</strong></td>
+                                <td>{{ application.email }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Phone:</strong></td>
+                                <td>{{ application.phone }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Position:</strong></td>
+                                <td>{{ application.position_applied }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Applied Date:</strong></td>
+                                <td>{{ application.applied_date }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Current Status:</strong></td>
+                                <td>
+                                    <span class="badge bg-{{ 'warning' if application.status == 'Pending' else 'success' if application.status == 'Approved' else 'danger' }}">
+                                        {{ application.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% if application.resume_file %}
+                            <tr>
+                                <td><strong>Resume:</strong></td>
+                                <td>
+                                    <a href="{{ url_for('static', filename='uploads/resumes/' + application.resume_file) }}" 
+                                       class="btn btn-sm btn-outline-primary" target="_blank">
+                                        <i class="fas fa-download me-1"></i>Download
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="mb-3">
+                    <h6>Address:</h6>
+                    <p class="border rounded p-2 bg-dark">{{ application.address }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>Work Experience:</h6>
+                    <p class="border rounded p-2 bg-dark">{{ application.work_experience }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>Education:</h6>
+                    <p class="border rounded p-2 bg-dark">{{ application.education }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>Skills & Qualifications:</h6>
+                    <p class="border rounded p-2 bg-dark">{{ application.skills }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Process Application</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('applications.update_application_status', app_id=application.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Update Status</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="Pending" {{ 'selected' if application.status == 'Pending' else '' }}>Pending Review</option>
+                            <option value="In Review" {{ 'selected' if application.status == 'In Review' else '' }}>In Review</option>
+                            <option value="Interview Scheduled" {{ 'selected' if application.status == 'Interview Scheduled' else '' }}>Interview Scheduled</option>
+                            <option value="Approved" {{ 'selected' if application.status == 'Approved' else '' }}>Approved</option>
+                            <option value="Rejected" {{ 'selected' if application.status == 'Rejected' else '' }}>Rejected</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="4" 
+                                  placeholder="Add processing notes...">{{ application.notes or '' }}</textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-1"></i>Update Application
+                        </button>
+                        <a href="{{ url_for('applications.manage_applications') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Applications
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
